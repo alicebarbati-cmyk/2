@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import ContentArea from '../ContentArea';
 import { generateLessonPlan, generateInterdisciplinaryConnections } from '../../services/geminiService';
@@ -36,19 +35,17 @@ const LessonGenerator: React.FC = () => {
         }
     };
 
-    const formatLessonForDownload = (): string => {
-        if (!lessonPlan) return '';
-        
+    const formatLessonForDownload = (plan: LessonPlan): string => {
         let text = `PIANO DI LEZIONE\n`;
         text += `====================================\n\n`;
-        text += `ARGOMENTO: ${lessonPlan.title}\n\n`;
-        text += `OBIETTIVO: ${lessonPlan.objective}\n\n`;
-        text += `MATERIALI:\n${lessonPlan.materials.map(m => `- ${m}`).join('\n')}\n\n`;
+        text += `ARGOMENTO: ${plan.title}\n\n`;
+        text += `OBIETTIVO: ${plan.objective}\n\n`;
+        text += `MATERIALI:\n${plan.materials.map(m => `- ${m}`).join('\n')}\n\n`;
         text += `------------------------------------\n`;
         text += `SVOLGIMENTO DELLA LEZIONE\n`;
         text += `------------------------------------\n\n`;
 
-        lessonPlan.sections.forEach(section => {
+        plan.sections.forEach(section => {
             text += `SEZIONE: ${section.title} (${section.duration} min)\n`;
             text += `ATTIVITÀ: ${section.content}\n\n`;
         });
@@ -56,14 +53,14 @@ const LessonGenerator: React.FC = () => {
         text += `------------------------------------\n`;
         text += `VALUTAZIONE / COMPITI\n`;
         text += `------------------------------------\n\n`;
-        text += `${lessonPlan.assessment}\n`;
+        text += `${plan.assessment}\n`;
 
         return text;
     };
 
     const handleDownload = () => {
         if (!lessonPlan) return;
-        const text = formatLessonForDownload();
+        const text = formatLessonForDownload(lessonPlan);
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -109,9 +106,9 @@ const LessonGenerator: React.FC = () => {
         </>
     );
 
-    const renderLessonPlan = () => (
+    const renderLessonPlanView = (plan: LessonPlan) => (
         <div>
-            <h4 className="text-2xl font-bold text-slate-800 mb-4">{lessonPlan.title}</h4>
+            <h4 className="text-2xl font-bold text-slate-800 mb-4">{plan.title}</h4>
             
             <div className="space-x-2 mb-6">
                 <button onClick={handleDownload} className="bg-blue-500 text-white font-semibold py-2 px-4 rounded-full text-sm">
@@ -125,13 +122,13 @@ const LessonGenerator: React.FC = () => {
             <div className="space-y-4 text-left">
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <h5 className="font-bold">🎯 Obiettivo</h5>
-                    <p>{lessonPlan.objective}</p>
+                    <p>{plan.objective}</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm">
                     <h5 className="font-bold">🛠️ Materiali</h5>
-                    <ul className="list-disc pl-5">{lessonPlan.materials.map((m, i) => <li key={i}>{m}</li>)}</ul>
+                    <ul className="list-disc pl-5">{plan.materials.map((m, i) => <li key={i}>{m}</li>)}</ul>
                 </div>
-                {lessonPlan.sections.map((section, i) => (
+                {plan.sections.map((section, i) => (
                     <div key={i} className="bg-white p-4 rounded-lg shadow-sm">
                         <h5 className="font-bold flex justify-between">
                             <span>{section.title}</span>
@@ -142,7 +139,7 @@ const LessonGenerator: React.FC = () => {
                 ))}
                  <div className="bg-white p-4 rounded-lg shadow-sm">
                     <h5 className="font-bold">📝 Valutazione / Compiti</h5>
-                    <p>{lessonPlan.assessment}</p>
+                    <p>{plan.assessment}</p>
                 </div>
             </div>
         </div>
@@ -151,8 +148,8 @@ const LessonGenerator: React.FC = () => {
     return (
         <div className="bg-green-50 p-6 rounded-2xl">
             <h3 className="text-xl font-bold text-slate-800 mb-3">👨‍🏫 Generatore di Lezioni per Docenti</h3>
-            <p className="mb-4 text-slate-600">Risparmia tempo sulla pianificazione! Inserisci un argomento e l'AI creerà una traccia di lezione strutturata.</p>
-            {lessonPlan ? renderLessonPlan() : renderSetup()}
+            <p className="mb-4 text-slate-600">Risparmia tempo sulla pianificazione!</p>
+            {lessonPlan ? renderLessonPlanView(lessonPlan) : renderSetup()}
         </div>
     );
 };
@@ -214,7 +211,7 @@ const InterdisciplinaryConnectionsGenerator: React.FC = () => {
         </>
     );
 
-    const renderConnections = () => (
+    const renderConnectionsView = (items: InterdisciplinaryConnection[]) => (
         <div>
             <h4 className="text-xl font-bold text-slate-800 mb-4">Collegamenti per "{topic}"</h4>
             <button onClick={() => { setConnections(null); setTopic(''); setStartingSubject(''); }} className="bg-slate-500 text-white font-semibold py-2 px-4 rounded-full text-sm mb-6">
@@ -222,7 +219,7 @@ const InterdisciplinaryConnectionsGenerator: React.FC = () => {
             </button>
 
             <div className="space-y-3">
-                {connections.map((item, index) => (
+                {items.map((item, index) => (
                     <div key={index} className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
                         <h5 className="font-bold text-purple-800">{item.subject}</h5>
                         <p className="text-slate-700">{item.connection}</p>
@@ -234,9 +231,9 @@ const InterdisciplinaryConnectionsGenerator: React.FC = () => {
 
     return (
         <div className="bg-purple-50 p-6 rounded-2xl mt-8">
-            <h3 className="text-xl font-bold text-slate-800 mb-3">🔗 Generatore di Collegamenti Interdisciplinari</h3>
-            <p className="mb-4 text-slate-600">Trova collegamenti tra materie diverse partendo da un argomento. Utile per tesine, esami orali o per esplorare nuove prospettive.</p>
-            {connections ? renderConnections() : renderSetup()}
+            <h3 className="text-xl font-bold text-slate-800 mb-3">🔗 Collegamenti Interdisciplinari</h3>
+            <p className="mb-4 text-slate-600">Trova collegamenti tra materie diverse.</p>
+            {connections ? renderConnectionsView(connections) : renderSetup()}
         </div>
     );
 };
@@ -244,7 +241,7 @@ const InterdisciplinaryConnectionsGenerator: React.FC = () => {
 const StudioSection: React.FC<StudioSectionProps> = ({ onBack }) => {
     return (
         <ContentArea title="Lezioni" onBack={onBack}>
-            <p className="mb-6">Materiali didattici, guide e risorse per supportare il tuo percorso di apprendimento e insegnamento.</p>
+            <p className="mb-6">Materiali didattici e risorse per lo studio.</p>
             <LessonGenerator />
             <InterdisciplinaryConnectionsGenerator />
         </ContentArea>

@@ -1,8 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Flashcard, QuizQuestion, RoutineSlot, LessonPlan, InterdisciplinaryConnection } from '../types';
 
-// Inizializzazione dinamica per utilizzare sempre la chiave più aggiornata
-const getAi = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Funzione di utilità per ottenere l'istanza AI con controllo sulla chiave
+const getAi = () => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === "undefined" || apiKey === "") {
+        throw new Error("Chiave API mancante. Configura la variabile d'ambiente API_KEY nelle impostazioni di Vercel.");
+    }
+    return new GoogleGenAI({ apiKey });
+};
 
 export const generateFlashcards = async (topic: string): Promise<Flashcard[]> => {
     try {
@@ -35,7 +41,7 @@ export const generateFlashcards = async (topic: string): Promise<Flashcard[]> =>
         return JSON.parse(jsonText);
     } catch (error) {
         console.error("Error generating flashcards:", error);
-        throw new Error("Failed to generate flashcards. Please try again.");
+        throw error;
     }
 };
 
@@ -89,7 +95,7 @@ export const generateQuiz = async (topic: string, numQuestions: number, question
         return JSON.parse(response.text.trim());
     } catch (error) {
         console.error("Error generating quiz:", error);
-        throw new Error("Failed to generate quiz. Please try again.");
+        throw error;
     }
 };
 
@@ -143,7 +149,7 @@ export const generateTestQuestions = async (topic: string, numQuestions: number,
         return JSON.parse(response.text.trim());
     } catch (error) {
         console.error("Error generating test questions:", error);
-        throw new Error("Failed to generate test questions. Please try again.");
+        throw error;
     }
 };
 
@@ -183,7 +189,7 @@ export const generateRoutine = async (startTime: string, endTime: string, tasks:
         return JSON.parse(response.text.trim());
     } catch (error) {
         console.error("Error generating routine:", error);
-        throw new Error("Failed to generate routine. Please try again.");
+        throw error;
     }
 }
 
@@ -232,7 +238,7 @@ export const generateLessonPlan = async (topic: string, duration: number, diffic
         return JSON.parse(response.text.trim());
     } catch (error) {
         console.error("Error generating lesson plan:", error);
-        throw new Error("Impossibile generare il piano di lezione. Riprova.");
+        throw error;
     }
 };
 
@@ -263,11 +269,11 @@ export const generateInterdisciplinaryConnections = async (topic: string, subjec
         return JSON.parse(response.text.trim());
     } catch (error) {
         console.error("Error generating connections:", error);
-        throw new Error("Impossibile generare i collegamenti. Riprova.");
+        throw error;
     }
 };
 
-const REGULATION_TEXT = `[... Testo del regolamento già presente nel file ...]`;
+const REGULATION_TEXT = `L'IISS "Pietro Verri" è una comunità di dialogo, di ricerca, di esperienza sociale, informata ai valori democratici e volta alla crescita della persona in tutte le sue dimensioni. Il regolamento aggiornato al 10/11/2025 prevede il rispetto delle persone, delle strutture e degli orari. L'uso dei telefoni cellulari è consentito solo per finalità didattiche sotto la supervisione del docente.`;
 
 export const answerRegulationQuestion = async (question: string): Promise<string> => {
     try {
@@ -282,6 +288,6 @@ export const answerRegulationQuestion = async (question: string): Promise<string
         return response.text;
     } catch (error) {
         console.error("Error answering regulation question:", error);
-        throw new Error("Failed to get an answer. Please try again.");
+        throw error;
     }
 };
